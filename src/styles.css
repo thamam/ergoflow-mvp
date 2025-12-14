@@ -1,0 +1,55 @@
+#ergoflow-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 2147483647; /* Max Z-Index */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.ergoflow-card {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.ergoflow-anim-placeholder {
+  background: #f0f0f0;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0;
+  border-radius: 8px;
+  color: #888;
+}
+
+.ergoflow-timer {
+  font-size: 2em;
+  font-weight: bold;
+  color: #2ecc71;
+  margin: 15px 0;
+}
+
+#ergoflow-close {
+  background: #333;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#ergoflow-close:hover {
+  background: #555;
+}
