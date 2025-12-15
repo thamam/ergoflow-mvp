@@ -1,19 +1,113 @@
+```javascript
 // State variables
 const ALARM_NAME = "break_alarm";
-const WORK_SESSION_MINUTES = 45; // Production value
+const DEFAULT_DURATION = 45;
+const DEFAULT_SETTINGS = {
+  mode: 'simple',
+  simpleInterval: 45,
+  fixedMinutes: [25, 55],
+  anchoredStart: '09:00',
+  anchoredInterval: 10
+};
 
 // Initialize on install
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("ErgoFlow Installed. Starting timer.");
-  startTimer();
+  console.log("ErgoFlow Installed.");
+  updateTimerFromStorage();
 });
 
-// Timer Logic
-function startTimer() {
-  chrome.alarms.create(ALARM_NAME, {
-    delayInMinutes: WORK_SESSION_MINUTES,
-    periodInMinutes: WORK_SESSION_MINUTES // Set period to auto-repeat for testing
+// Update timer when storage changes
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "sync") {
+    console.log("Settings changed. Rescheduling...");
+    updateTimerFromStorage();
+  }
+});
+
+// Helper: Get duration from storage and start timer
+function updateTimerFromStorage() {
+  chrome.storage.sync.get(DEFAULT_SETTINGS, (items) => {
+    updateTimer(items); // items is the full settings object
   });
+}
+
+// Scheduler Logic
+function updateTimer(settings) {
+  // Clear existing alarm
+  chrome.alarms.clear(ALARM_NAME, (wasCleared) => {
+    if (wasCleared) console.log("Previous alarm cleared.");
+
+    // Retrieve full settings or use defaults if partial
+    console.log("Rescheduling with mode:", settings.mode);
+
+    // Calculate Next Trigger Time
+    const nextTimestamp = calculateNextTrigger(settings);
+
+    if (nextTimestamp) {
+      // Calculate delay in minutes from now
+      const delayInMinutes = (nextTimestamp - Date.now()) / 1000 / 60;
+      console.log(`Next alarm scheduled for ${ new Date(nextTimestamp).toLocaleTimeString() }(in ${ delayInMinutes.toFixed(2) } mins).`);
+
+      // Schedule ONE-TIME alarm. The alarm handler will reschedule the next one.
+      chrome.alarms.create(ALARM_NAME, {
+        when: nextTimestamp
+      });
+    } else {
+      console.error("Could not calculate next trigger time.");
+    }
+  });
+}
+
+function calculateNextTrigger(settings) {
+  const now = new Date();
+  const mode = settings.mode || 'simple';
+
+  if (mode === 'simple') {
+    const interval = settings.simpleInterval || DEFAULT_DURATION;
+    return Date.now() + (interval * 60 * 1000);
+  }
+
+  if (mode === 'fixed') {
+    const minutes = settings.fixedMinutes || [25, 55];
+    minutes.sort((a, b) => a - b);
+
+    for (let m of minutes) {
+      let candidate = new Date(now);
+      candidate.setMinutes(m, 0, 0);
+      if (candidate > now) return candidate.getTime();
+    }
+    // If no future minute found in current hour, pick first minute of next hour
+    let candidate = new Date(now);
+    candidate.setHours(candidate.getHours() + 1);
+    candidate.setMinutes(minutes[0], 0, 0);
+    return candidate.getTime();
+  }
+
+  if (mode === 'anchored') {
+    // Parse start time "13:45"
+    const [h, m] = (settings.anchoredStart || "09:00").split(':').map(Number);
+    const interval = settings.anchoredInterval || 45; // Minutes
+
+    // Start date object
+    let start = new Date(now);
+    start.setHours(h, m, 0, 0);
+
+    // If start is in future, that is the next trigger
+    if (start > now) return start.getTime();
+
+    // Otherwise, add intervals until we pass 'now'
+    const intervalMs = interval * 60 * 1000;
+    const diff = now - start;
+    const intervalsPassed = Math.ceil(diff / intervalMs);
+
+    // Next trigger
+    const nextTime = start.getTime() + (intervalsPassed * intervalMs);
+
+    // If calculated time is now or in past, add another interval
+    return nextTime <= now.getTime() ? nextTime + intervalMs : nextTime;
+  }
+
+  return Date.now() + (DEFAULT_DURATION * 60 * 1000); // Fallback
 }
 
 // Alarm Listener
@@ -63,7 +157,7 @@ async function triggerBreak() {
     }
 
     // Dynamic Injection
-    console.log(`Injecting script into tab ${activeTab.id} (${activeTab.title})...`);
+    console.log(`Injecting script into tab ${ activeTab.id } (${ activeTab.title })...`);
 
     await chrome.scripting.insertCSS({
       target: { tabId: activeTab.id },
