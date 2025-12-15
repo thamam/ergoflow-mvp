@@ -6,14 +6,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 function createOverlay(exercise) {
-  // Check if overlay already exists
-  if (document.getElementById("ergoflow-overlay")) return;
+  // Idempotency: Check if overlay already exists
+  if (document.getElementById("ergoflow-overlay")) {
+    console.log("Overlay already exists. Skipping creation.");
+    return;
+  }
 
   // Create Container
   const overlay = document.createElement("div");
   overlay.id = "ergoflow-overlay";
-  
-  // HTML Content (Shadow DOM simulation)
+
+  // HTML Content
   overlay.innerHTML = `
     <div class="ergoflow-card">
       <h1>Time to Reset</h1>
@@ -30,8 +33,14 @@ function createOverlay(exercise) {
   document.body.appendChild(overlay);
 
   // Add Event Listener to Close Button
-  document.getElementById("ergoflow-close").addEventListener("click", () => {
-    overlay.remove();
-    // Optional: Send message back to background to restart timer
-  });
+  const closeBtn = document.getElementById("ergoflow-close");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      const existingOverlay = document.getElementById("ergoflow-overlay");
+      if (existingOverlay) {
+        existingOverlay.remove();
+        console.log("Overlay removed by user.");
+      }
+    });
+  }
 }
