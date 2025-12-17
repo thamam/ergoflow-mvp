@@ -1,4 +1,3 @@
-```javascript
 // State variables
 const ALARM_NAME = "break_alarm";
 const DEFAULT_DURATION = 45;
@@ -46,7 +45,7 @@ function updateTimer(settings) {
     if (nextTimestamp) {
       // Calculate delay in minutes from now
       const delayInMinutes = (nextTimestamp - Date.now()) / 1000 / 60;
-      console.log(`Next alarm scheduled for ${ new Date(nextTimestamp).toLocaleTimeString() }(in ${ delayInMinutes.toFixed(2) } mins).`);
+      console.log(`Next alarm scheduled for ${new Date(nextTimestamp).toLocaleTimeString()}(in ${delayInMinutes.toFixed(2)} mins).`);
 
       // Schedule ONE-TIME alarm. The alarm handler will reschedule the next one.
       chrome.alarms.create(ALARM_NAME, {
@@ -157,7 +156,7 @@ async function triggerBreak() {
     }
 
     // Dynamic Injection
-    console.log(`Injecting script into tab ${ activeTab.id } (${ activeTab.title })...`);
+    console.log(`Injecting script into tab ${activeTab.id} (${activeTab.title})...`);
 
     await chrome.scripting.insertCSS({
       target: { tabId: activeTab.id },
@@ -187,9 +186,9 @@ async function triggerBreak() {
 // Mock Data Provider
 function getRandomExercise() {
   const exercises = [
-    { id: 1, title: "Neck Rotations", instruction: "Slowly rotate your neck clockwise for 10 seconds.", duration: 15 },
-    { id: 2, title: "Wrist Stretch", instruction: "Extend your arm and pull your fingers back gently.", duration: 15 },
-    { id: 3, title: "Eye Palming", instruction: "Rub hands together and place warm palms over closed eyes.", duration: 20 }
+    { id: 1, title: "Neck Rotations", instruction: "Slowly rotate your neck clockwise for 10 seconds.", duration: 15, video_url: "https://www.w3schools.com/html/mov_bbb.mp4" },
+    { id: 2, title: "Wrist Stretch", instruction: "Extend your arm and pull your fingers back gently.", duration: 15, video_url: "https://www.w3schools.com/html/mov_bbb.mp4" },
+    { id: 3, title: "Eye Palming", instruction: "Rub hands together and place warm palms over closed eyes.", duration: 20, video_url: "https://www.w3schools.com/html/mov_bbb.mp4" }
   ];
   return exercises[Math.floor(Math.random() * exercises.length)];
 }
